@@ -14,9 +14,14 @@
 <div id="game"></div>
 
 <script>
-function start(){
-  document.getElementById("game").innerHTML = "เกมเริ่มแล้ว!";
-}
+function startMemory(){
+  score = 0;
+  level = "∞"; // หรือไม่ใส่ก็ได้
+
+  queue = shuffle([...elements]); // ใช้ทั้งหมด
+
+  show("game");
+info.innerText = `คะแนน: ${score} | Level: ${level}`;
 </script>
 
 </body>
