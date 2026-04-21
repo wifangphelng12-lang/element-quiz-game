@@ -2,165 +2,154 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Element Quiz Game</title>
+<title>Element Master Game</title>
 
 <style>
-:root {
-  --bg: #0f172a;
-  --text: #ffffff;
-  --card: #1e293b;
-  --btn: #3b82f6;
+:root{
+  --bg:#0f172a; --text:#fff; --card:#1e293b; --btn:#3b82f6;
 }
-
-body.light {
-  --bg: #f1f5f9;
-  --text: #0f172a;
-  --card: #ffffff;
-  --btn: #2563eb;
+body.light{
+  --bg:#f1f5f9; --text:#0f172a; --card:#fff; --btn:#2563eb;
 }
-
-body {
-  margin: 0;
-  font-family: Arial;
-  background: var(--bg);
-  color: var(--text);
-  transition: all 0.4s ease; /* fade */
-  text-align: center;
+body{
+  margin:0; font-family:Arial;
+  background:var(--bg); color:var(--text);
+  transition:0.4s;
+  text-align:center;
 }
-
-/* ปุ่ม */
-button {
-  padding: 12px;
-  margin: 10px;
-  border: none;
-  border-radius: 12px;
-  background: var(--btn);
-  color: white;
-  cursor: pointer;
-  font-size: 16px;
-  transition: transform 0.1s, background 0.3s;
+button{
+  padding:12px; margin:8px;
+  border:none; border-radius:12px;
+  background:var(--btn); color:#fff;
+  cursor:pointer;
+  transition:.1s,.3s;
 }
-
-button:active {
-  transform: scale(0.92); /* เด้ง */
+button:active{ transform:scale(.9); }
+.screen{ display:none; }
+.active{ display:block; }
+.card{ font-size:60px; margin:30px; }
+.theme, .sound{
+  position:fixed; bottom:20px;
+  width:50px; height:50px;
+  border-radius:50%;
 }
-
-/* หน้า */
-.screen {
-  display: none;
+.theme{ right:20px; }
+.sound{ left:20px; }
+.table{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px; padding:10px;
 }
-
-.active {
-  display: block;
-}
-
-.card {
-  font-size: 60px;
-  margin: 30px;
-}
-
-/* ธีมปุ่ม */
-.theme-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  font-size: 20px;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
-}
-
-/* ตาราง */
-.table {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 10px;
-  padding: 10px;
-}
-
-.cell {
-  background: var(--card);
-  padding: 10px;
-  border-radius: 10px;
+.cell{
+  background:var(--card);
+  border-radius:10px;
+  padding:8px;
 }
 </style>
 </head>
 
 <body>
 
-<!-- 🌟 MENU -->
+<!-- MENU -->
 <div id="menu" class="screen active">
-  <h1>🧪 Element Quiz Game</h1>
-  <p>เลือกโหมด</p>
-
+  <h1>🧪 Element Master</h1>
   <button onclick="startLevel()">🟢 Level Mode</button><br>
   <button onclick="startMemory()">🔵 Memory 118</button><br>
   <button onclick="showTable()">🟣 Periodic Table</button>
 </div>
 
-<!-- 🎮 GAME -->
+<!-- GAME -->
 <div id="game" class="screen">
-  <h2 id="score">คะแนน: 0 | Level: 1</h2>
+  <h2 id="info"></h2>
   <div id="question" class="card"></div>
   <div id="choices"></div>
-  <br>
-  <button onclick="backMenu()">← กลับเมนู</button>
+  <button onclick="backMenu()">← เมนู</button>
 </div>
 
-<!-- 📊 TABLE -->
+<!-- TABLE -->
 <div id="table" class="screen">
   <h2>📊 ตารางธาตุ</h2>
   <div id="tableData" class="table"></div>
-  <br>
-  <button onclick="backMenu()">← กลับเมนู</button>
+  <button onclick="backMenu()">← เมนู</button>
 </div>
 
-<!-- 🌙 Theme -->
-<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+<button class="theme" onclick="toggleTheme()">🌙</button>
+<button class="sound" onclick="toggleSound()">🔊</button>
 
 <script>
-/* 🌗 Theme */
-function toggleTheme(){
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
+// 🎵 SOUND (ใช้ beep แทนไฟล์)
+let soundOn = true;
+
+function play(freq){
+  if(!soundOn) return;
+  let ctx = new (window.AudioContext||window.webkitAudioContext)();
+  let osc = ctx.createOscillator();
+  osc.frequency.value = freq;
+  osc.connect(ctx.destination);
+  osc.start();
+  setTimeout(()=>osc.stop(),150);
 }
 
+function toggleSound(){
+  soundOn=!soundOn;
+  localStorage.setItem("sound",soundOn);
+}
+
+if(localStorage.getItem("sound")==="false") soundOn=false;
+
+// 🌗 THEME
+function toggleTheme(){
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme",
+    document.body.classList.contains("light")?"light":"dark");
+}
 if(localStorage.getItem("theme")==="light"){
   document.body.classList.add("light");
 }
 
-/* 📚 Elements (ตัวอย่าง + คุณเพิ่มต่อได้) */
-const elements = [
-  {s:"H", th:"ไฮโดรเจน", en:"Hydrogen"},
-  {s:"He", th:"ฮีเลียม", en:"Helium"},
-  {s:"Li", th:"ลิเทียม", en:"Lithium"},
-  {s:"C", th:"คาร์บอน", en:"Carbon"},
-  {s:"O", th:"ออกซิเจน", en:"Oxygen"},
-  {s:"Na", th:"โซเดียม", en:"Sodium"},
-  {s:"Fe", th:"เหล็ก", en:"Iron"},
-  {s:"Cu", th:"ทองแดง", en:"Copper"},
-  {s:"Zn", th:"สังกะสี", en:"Zinc"},
-  {s:"Cl", th:"คลอรีน", en:"Chlorine"}
+// 📚 ELEMENT DATA (เพิ่มต่อได้)
+const elements=[
+{s:"H",th:"ไฮโดรเจน",en:"Hydrogen"},
+{s:"He",th:"ฮีเลียม",en:"Helium"},
+{s:"Li",th:"ลิเทียม",en:"Lithium"},
+{s:"Be",th:"เบริลเลียม",en:"Beryllium"},
+{s:"B",th:"โบรอน",en:"Boron"},
+{s:"C",th:"คาร์บอน",en:"Carbon"},
+{s:"N",th:"ไนโตรเจน",en:"Nitrogen"},
+{s:"O",th:"ออกซิเจน",en:"Oxygen"},
+{s:"F",th:"ฟลูออรีน",en:"Fluorine"},
+{s:"Na",th:"โซเดียม",en:"Sodium"},
+{s:"Fe",th:"เหล็ก",en:"Iron"},
+{s:"Cu",th:"ทองแดง",en:"Copper"},
+{s:"Zn",th:"สังกะสี",en:"Zinc"},
+{s:"Ag",th:"เงิน",en:"Silver"},
+{s:"Au",th:"ทอง",en:"Gold"},
+{s:"Hg",th:"ปรอท",en:"Mercury"},
 ];
 
+// 🔧 STATE
 let score=0, level=1, queue=[];
 
-/* 🎮 Screen */
+// 🔄 SCREEN
 function show(id){
-  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-  document.getElementById(id).classList.add("active");
+ document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+ document.getElementById(id).classList.add("active");
 }
 
-/* 🟢 Level Mode */
+// 🟢 LEVEL MODE
 function startLevel(){
-  level=1;
-  score=0;
-  queue = shuffle(elements).slice(0,10);
+  score=0; level=1;
+  loadLevel();
   show("game");
+}
+
+function loadLevel(){
+  let count = Math.min(level*10, elements.length);
+  queue = shuffle(elements).slice(0,count);
   nextQ();
 }
 
-/* 🔵 Memory */
+// 🔵 MEMORY
 function startMemory(){
   score=0;
   queue = shuffle([...elements]);
@@ -168,36 +157,37 @@ function startMemory(){
   nextQ();
 }
 
-/* 🟣 Table */
+// 🟣 TABLE
 function showTable(){
   show("table");
   let html="";
   elements.forEach(e=>{
-    html += `<div class="cell">${e.s}<br>${e.th}<br>${e.en}</div>`;
+    html+=`<div class="cell">${e.s}<br>${e.th}<br>${e.en}</div>`;
   });
-  document.getElementById("tableData").innerHTML = html;
+  tableData.innerHTML=html;
 }
 
-/* 🔄 Question */
+// ❓ QUESTION
 function nextQ(){
   if(queue.length===0){
-    alert("ผ่านด่าน!");
-    backMenu();
+    play(800);
+    level++;
+    alert("🎉 Level Up!");
+    loadLevel();
     return;
   }
 
-  const q = queue[0];
-  const askSymbol = Math.random() < 0.5;
-
-  document.getElementById("question").innerText =
-    askSymbol ? q.s : `${q.th}`;
+  let q=queue[0];
+  let askSymbol = Math.random()<0.5;
 
   let correct = askSymbol ? q.th : q.s;
 
+  question.innerText = askSymbol ? q.s : q.th;
+
   let choices=[correct];
   while(choices.length<4){
-    let rand = elements[Math.floor(Math.random()*elements.length)];
-    let val = askSymbol ? rand.th : rand.s;
+    let r = elements[Math.floor(Math.random()*elements.length)];
+    let val = askSymbol ? r.th : r.s;
     if(!choices.includes(val)) choices.push(val);
   }
 
@@ -205,31 +195,33 @@ function nextQ(){
 
   let html="";
   choices.forEach(c=>{
-    html += `<button onclick="answer('${c}','${correct}')">${c}</button>`;
+    html+=`<button onclick="answer('${c}','${correct}')">${c}</button>`;
   });
 
-  document.getElementById("choices").innerHTML = html;
-  document.getElementById("score").innerText = `คะแนน: ${score} | Level: ${level}`;
+  choicesDiv.innerHTML=html;
+  info.innerText = `คะแนน: ${score} | Level: ${level}`;
 }
 
-/* ✅ Answer */
+// ✅ ANSWER
 function answer(c,correct){
   if(c===correct){
     score+=10;
+    play(700);
     queue.shift();
   }else{
     score-=5;
+    play(200);
     queue.push(queue.shift());
   }
   nextQ();
 }
 
-/* 🔙 Menu */
+// 🔙
 function backMenu(){
   show("menu");
 }
 
-/* 🔀 */
+// 🔀
 function shuffle(a){
   return a.sort(()=>Math.random()-0.5);
 }
