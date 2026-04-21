@@ -1,154 +1,21 @@
 <!DOCTYPE html>
-<html lang="th">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Element Game</title>
-
-<style>
-body {
-  font-family: Arial;
-  text-align: center;
-  background: #0f172a;
-  color: white;
-}
-
-.light {
-  background: #f1f5f9;
-  color: black;
-}
-
-button {
-  padding: 12px;
-  margin: 8px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-}
-
-.card {
-  font-size: 60px;
-  margin: 30px;
-}
-
-.theme {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-}
-</style>
+<title>Game</title>
 </head>
 
 <body>
 
-<!-- MENU -->
-<div id="menu">
-  <h1>🧪 Element Game</h1>
-  <button onclick="startLevel()">Level Mode</button><br>
-  <button onclick="startMemory()">Memory Mode</button>
-</div>
+<h1>Element Game</h1>
 
-<!-- GAME -->
-<div id="game" style="display:none;">
-  <h2 id="score">คะแนน: 0</h2>
-  <div id="question" class="card"></div>
-  <div id="choices"></div>
-  <button onclick="backMenu()">← กลับ</button>
-</div>
+<button onclick="start()">Start Game</button>
 
-<button class="theme" onclick="toggleTheme()">🌙</button>
+<div id="game"></div>
 
 <script>
-let elements = [
-  {s:"H", th:"ไฮโดรเจน"},
-  {s:"He", th:"ฮีเลียม"},
-  {s:"Li", th:"ลิเทียม"},
-  {s:"C", th:"คาร์บอน"},
-  {s:"O", th:"ออกซิเจน"},
-  {s:"Na", th:"โซเดียม"},
-  {s:"Fe", th:"เหล็ก"},
-  {s:"Cu", th:"ทองแดง"},
-  {s:"Zn", th:"สังกะสี"}
-];
-
-let queue = [];
-let score = 0;
-
-// 🌙 Theme
-function toggleTheme(){
-  document.body.classList.toggle("light");
-}
-
-// 🎮 Start
-function startLevel(){
-  score = 0;
-  queue = [...elements];
-  showGame();
-  nextQ();
-}
-
-function startMemory(){
-  score = 0;
-  queue = [...elements];
-  showGame();
-  nextQ();
-}
-
-// 📺 UI
-function showGame(){
-  document.getElementById("menu").style.display="none";
-  document.getElementById("game").style.display="block";
-}
-
-function backMenu(){
-  document.getElementById("menu").style.display="block";
-  document.getElementById("game").style.display="none";
-}
-
-// ❓ Question
-function nextQ(){
-  if(queue.length === 0){
-    alert("จบแล้ว!");
-    backMenu();
-    return;
-  }
-
-  let current = queue[0];
-  let askSymbol = Math.random() < 0.5;
-
-  let correct = askSymbol ? current.th : current.s;
-
-  document.getElementById("question").innerText =
-    askSymbol ? current.s : current.th;
-
-  let choices = [correct];
-
-  while(choices.length < 4){
-    let rand = elements[Math.floor(Math.random()*elements.length)];
-    let val = askSymbol ? rand.th : rand.s;
-    if(!choices.includes(val)) choices.push(val);
-  }
-
-  choices.sort(()=>Math.random()-0.5);
-
-  let html = "";
-  choices.forEach(c=>{
-    html += `<button onclick="answer('${c}','${correct}')">${c}</button>`;
-  });
-
-  document.getElementById("choices").innerHTML = html;
-  document.getElementById("score").innerText = "คะแนน: " + score;
-}
-
-// ✅ Answer
-function answer(c, correct){
-  if(c === correct){
-    score += 10;
-    queue.shift();
-  } else {
-    score -= 5;
-    queue.push(queue.shift());
-  }
-  nextQ();
+function start(){
+  document.getElementById("game").innerHTML = "เกมเริ่มแล้ว!";
 }
 </script>
 
