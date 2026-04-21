@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<title>Element Memory Game</title>
+<style>
+body {
+    font-family: Arial;
+    text-align: center;
+    background: #0f172a;
+    color: white;
+}
+.card {
+    font-size: 80px;
+    margin: 40px;
+}
+button {
+    padding: 15px;
+    margin: 10px;
+    width: 200px;
+    border: none;
+    border-radius: 10px;
+    font-size: 18px;
+    cursor: pointer;
+}
+.correct { background: #22c55e; }
+.wrong { background: #ef4444; }
+</style>
+</head>
+<body>
+
+<h1>🧪 เกมทายธาตุ</h1>
+<div id="score">คะแนน: 0</div>
+<div class="card" id="symbol">H</div>
+
+<div id="choices"></div>
+
+<script>
+// 📚 ข้อมูลธาตุ
+const elements = [
+  {symbol: "H", name: "Hydrogen"},
+  {symbol: "He", name: "Helium"},
+  {symbol: "Li", name: "Lithium"},
+  {symbol: "C", name: "Carbon"},
+  {symbol: "O", name: "Oxygen"},
+  {symbol: "Na", name: "Sodium"},
+  {symbol: "Cl", name: "Chlorine"},
+  {symbol: "K", name: "Potassium"},
+  {symbol: "Ca", name: "Calcium"},
+  {symbol: "Fe", name: "Iron"},
+  {symbol: "Cu", name: "Copper"},
+  {symbol: "Zn", name: "Zinc"}
+];
+
+let queue = [...elements]; // คิวคำถาม
+let score = 0;
+
+function shuffle(array) {
+  return array.sort(() => Math.random() - 0.5);
+}
+
+function nextQuestion() {
+  if (queue.length === 0) {
+    document.body.innerHTML = "<h1>🎉 คุณตอบถูกหมดแล้ว!</h1>";
+    return;
+  }
+
+  const current = queue[0];
+  document.getElementById("symbol").innerText = current.symbol;
+
+  let choices = [current.name];
+
+  while (choices.length < 4) {
+    let rand = elements[Math.floor(Math.random() * elements.length)].name;
+    if (!choices.includes(rand)) choices.push(rand);
+  }
+
+  choices = shuffle(choices);
+
+  const choicesDiv = document.getElementById("choices");
+  choicesDiv.innerHTML = "";
+
+  choices.forEach(choice => {
+    const btn = document.createElement("button");
+    btn.innerText = choice;
+
+    btn.onclick = () => {
+      if (choice === current.name) {
+        btn.classList.add("correct");
+        score++;
+        document.getElementById("score").innerText = "คะแนน: " + score;
+
+        queue.shift(); // เอาออกจากคิว
+        setTimeout(nextQuestion, 500);
+
+      } else {
+        btn.classList.add("wrong");
+
+        // ❗ ดันไปท้ายคิว
+        queue.push(queue.shift());
+
+        setTimeout(nextQuestion, 500);
+      }
+    };
+
+    choicesDiv.appendChild(btn);
+  });
+}
+
+nextQuestion();
+</script>
+
+</body>
+</html>
