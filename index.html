@@ -2,112 +2,237 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Element Memory Game</title>
+<title>Element Quiz Game</title>
+
 <style>
+:root {
+  --bg: #0f172a;
+  --text: #ffffff;
+  --card: #1e293b;
+  --btn: #3b82f6;
+}
+
+body.light {
+  --bg: #f1f5f9;
+  --text: #0f172a;
+  --card: #ffffff;
+  --btn: #2563eb;
+}
+
 body {
-    font-family: Arial;
-    text-align: center;
-    background: #0f172a;
-    color: white;
+  margin: 0;
+  font-family: Arial;
+  background: var(--bg);
+  color: var(--text);
+  transition: all 0.4s ease; /* fade */
+  text-align: center;
 }
-.card {
-    font-size: 80px;
-    margin: 40px;
-}
+
+/* ปุ่ม */
 button {
-    padding: 15px;
-    margin: 10px;
-    width: 200px;
-    border: none;
-    border-radius: 10px;
-    font-size: 18px;
-    cursor: pointer;
+  padding: 12px;
+  margin: 10px;
+  border: none;
+  border-radius: 12px;
+  background: var(--btn);
+  color: white;
+  cursor: pointer;
+  font-size: 16px;
+  transition: transform 0.1s, background 0.3s;
 }
-.correct { background: #22c55e; }
-.wrong { background: #ef4444; }
+
+button:active {
+  transform: scale(0.92); /* เด้ง */
+}
+
+/* หน้า */
+.screen {
+  display: none;
+}
+
+.active {
+  display: block;
+}
+
+.card {
+  font-size: 60px;
+  margin: 30px;
+}
+
+/* ธีมปุ่ม */
+.theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  font-size: 20px;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+}
+
+/* ตาราง */
+.table {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  padding: 10px;
+}
+
+.cell {
+  background: var(--card);
+  padding: 10px;
+  border-radius: 10px;
+}
 </style>
 </head>
+
 <body>
 
-<h1>🧪 เกมทายธาตุ</h1>
-<div id="score">คะแนน: 0</div>
-<div class="card" id="symbol">H</div>
+<!-- 🌟 MENU -->
+<div id="menu" class="screen active">
+  <h1>🧪 Element Quiz Game</h1>
+  <p>เลือกโหมด</p>
 
-<div id="choices"></div>
+  <button onclick="startLevel()">🟢 Level Mode</button><br>
+  <button onclick="startMemory()">🔵 Memory 118</button><br>
+  <button onclick="showTable()">🟣 Periodic Table</button>
+</div>
+
+<!-- 🎮 GAME -->
+<div id="game" class="screen">
+  <h2 id="score">คะแนน: 0 | Level: 1</h2>
+  <div id="question" class="card"></div>
+  <div id="choices"></div>
+  <br>
+  <button onclick="backMenu()">← กลับเมนู</button>
+</div>
+
+<!-- 📊 TABLE -->
+<div id="table" class="screen">
+  <h2>📊 ตารางธาตุ</h2>
+  <div id="tableData" class="table"></div>
+  <br>
+  <button onclick="backMenu()">← กลับเมนู</button>
+</div>
+
+<!-- 🌙 Theme -->
+<button class="theme-toggle" onclick="toggleTheme()">🌙</button>
 
 <script>
-// 📚 ข้อมูลธาตุ
-const elements = [
-  {symbol: "H", name: "Hydrogen"},
-  {symbol: "He", name: "Helium"},
-  {symbol: "Li", name: "Lithium"},
-  {symbol: "C", name: "Carbon"},
-  {symbol: "O", name: "Oxygen"},
-  {symbol: "Na", name: "Sodium"},
-  {symbol: "Cl", name: "Chlorine"},
-  {symbol: "K", name: "Potassium"},
-  {symbol: "Ca", name: "Calcium"},
-  {symbol: "Fe", name: "Iron"},
-  {symbol: "Cu", name: "Copper"},
-  {symbol: "Zn", name: "Zinc"}
-];
-
-let queue = [...elements]; // คิวคำถาม
-let score = 0;
-
-function shuffle(array) {
-  return array.sort(() => Math.random() - 0.5);
+/* 🌗 Theme */
+function toggleTheme(){
+  document.body.classList.toggle("light");
+  localStorage.setItem("theme", document.body.classList.contains("light") ? "light" : "dark");
 }
 
-function nextQuestion() {
-  if (queue.length === 0) {
-    document.body.innerHTML = "<h1>🎉 คุณตอบถูกหมดแล้ว!</h1>";
+if(localStorage.getItem("theme")==="light"){
+  document.body.classList.add("light");
+}
+
+/* 📚 Elements (ตัวอย่าง + คุณเพิ่มต่อได้) */
+const elements = [
+  {s:"H", th:"ไฮโดรเจน", en:"Hydrogen"},
+  {s:"He", th:"ฮีเลียม", en:"Helium"},
+  {s:"Li", th:"ลิเทียม", en:"Lithium"},
+  {s:"C", th:"คาร์บอน", en:"Carbon"},
+  {s:"O", th:"ออกซิเจน", en:"Oxygen"},
+  {s:"Na", th:"โซเดียม", en:"Sodium"},
+  {s:"Fe", th:"เหล็ก", en:"Iron"},
+  {s:"Cu", th:"ทองแดง", en:"Copper"},
+  {s:"Zn", th:"สังกะสี", en:"Zinc"},
+  {s:"Cl", th:"คลอรีน", en:"Chlorine"}
+];
+
+let score=0, level=1, queue=[];
+
+/* 🎮 Screen */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+}
+
+/* 🟢 Level Mode */
+function startLevel(){
+  level=1;
+  score=0;
+  queue = shuffle(elements).slice(0,10);
+  show("game");
+  nextQ();
+}
+
+/* 🔵 Memory */
+function startMemory(){
+  score=0;
+  queue = shuffle([...elements]);
+  show("game");
+  nextQ();
+}
+
+/* 🟣 Table */
+function showTable(){
+  show("table");
+  let html="";
+  elements.forEach(e=>{
+    html += `<div class="cell">${e.s}<br>${e.th}<br>${e.en}</div>`;
+  });
+  document.getElementById("tableData").innerHTML = html;
+}
+
+/* 🔄 Question */
+function nextQ(){
+  if(queue.length===0){
+    alert("ผ่านด่าน!");
+    backMenu();
     return;
   }
 
-  const current = queue[0];
-  document.getElementById("symbol").innerText = current.symbol;
+  const q = queue[0];
+  const askSymbol = Math.random() < 0.5;
 
-  let choices = [current.name];
+  document.getElementById("question").innerText =
+    askSymbol ? q.s : `${q.th}`;
 
-  while (choices.length < 4) {
-    let rand = elements[Math.floor(Math.random() * elements.length)].name;
-    if (!choices.includes(rand)) choices.push(rand);
+  let correct = askSymbol ? q.th : q.s;
+
+  let choices=[correct];
+  while(choices.length<4){
+    let rand = elements[Math.floor(Math.random()*elements.length)];
+    let val = askSymbol ? rand.th : rand.s;
+    if(!choices.includes(val)) choices.push(val);
   }
 
   choices = shuffle(choices);
 
-  const choicesDiv = document.getElementById("choices");
-  choicesDiv.innerHTML = "";
-
-  choices.forEach(choice => {
-    const btn = document.createElement("button");
-    btn.innerText = choice;
-
-    btn.onclick = () => {
-      if (choice === current.name) {
-        btn.classList.add("correct");
-        score++;
-        document.getElementById("score").innerText = "คะแนน: " + score;
-
-        queue.shift(); // เอาออกจากคิว
-        setTimeout(nextQuestion, 500);
-
-      } else {
-        btn.classList.add("wrong");
-
-        // ❗ ดันไปท้ายคิว
-        queue.push(queue.shift());
-
-        setTimeout(nextQuestion, 500);
-      }
-    };
-
-    choicesDiv.appendChild(btn);
+  let html="";
+  choices.forEach(c=>{
+    html += `<button onclick="answer('${c}','${correct}')">${c}</button>`;
   });
+
+  document.getElementById("choices").innerHTML = html;
+  document.getElementById("score").innerText = `คะแนน: ${score} | Level: ${level}`;
 }
 
-nextQuestion();
+/* ✅ Answer */
+function answer(c,correct){
+  if(c===correct){
+    score+=10;
+    queue.shift();
+  }else{
+    score-=5;
+    queue.push(queue.shift());
+  }
+  nextQ();
+}
+
+/* 🔙 Menu */
+function backMenu(){
+  show("menu");
+}
+
+/* 🔀 */
+function shuffle(a){
+  return a.sort(()=>Math.random()-0.5);
+}
 </script>
 
 </body>
