@@ -2,186 +2,154 @@
 <html lang="th">
 <head>
 <meta charset="UTF-8">
-<title>Element Master Game</title>
+<title>Element Game</title>
+
 <style>
-:root{--bg:#0f172a;--text:#fff;--card:#1e293b;--btn:#3b82f6;}
-body.light{--bg:#f1f5f9;--text:#0f172a;--card:#fff;--btn:#2563eb;}
-body{margin:0;font-family:Arial;background:var(--bg);color:var(--text);transition:.4s;text-align:center;}
-button{padding:12px;margin:8px;border:none;border-radius:12px;background:var(--btn);color:#fff;cursor:pointer;transition:.1s,.3s;}
-button:active{transform:scale(.9);}
-.screen{display:none;}
-.active{display:block;}
-.card{font-size:60px;margin:30px;}
-.theme,.sound{position:fixed;bottom:20px;width:50px;height:50px;border-radius:50%;}
-.theme{right:20px;}
-.sound{left:20px;}
-.table{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:10px;}
-.cell{background:var(--card);border-radius:10px;padding:8px;}
+body {
+  font-family: Arial;
+  text-align: center;
+  background: #0f172a;
+  color: white;
+}
+
+.light {
+  background: #f1f5f9;
+  color: black;
+}
+
+button {
+  padding: 12px;
+  margin: 8px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.card {
+  font-size: 60px;
+  margin: 30px;
+}
+
+.theme {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+}
 </style>
 </head>
 
 <body>
 
-<div id="menu" class="screen active">
-<h1>🧪 Element Master</h1>
-<button onclick="startLevel()">🟢 Level Mode</button><br>
-<button onclick="startMemory()">🔵 Memory 118</button><br>
-<button onclick="showTable()">🟣 Periodic Table</button>
+<!-- MENU -->
+<div id="menu">
+  <h1>🧪 Element Game</h1>
+  <button onclick="startLevel()">Level Mode</button><br>
+  <button onclick="startMemory()">Memory Mode</button>
 </div>
 
-<div id="game" class="screen">
-<h2 id="info"></h2>
-<div id="question" class="card"></div>
-<div id="choices"></div>
-<button onclick="backMenu()">← เมนู</button>
-</div>
-
-<div id="table" class="screen">
-<h2>📊 ตารางธาตุ</h2>
-<div id="tableData" class="table"></div>
-<button onclick="backMenu()">← เมนู</button>
+<!-- GAME -->
+<div id="game" style="display:none;">
+  <h2 id="score">คะแนน: 0</h2>
+  <div id="question" class="card"></div>
+  <div id="choices"></div>
+  <button onclick="backMenu()">← กลับ</button>
 </div>
 
 <button class="theme" onclick="toggleTheme()">🌙</button>
-<button class="sound" onclick="toggleSound()">🔊</button>
 
 <script>
-// 🔧 FIX: ประกาศตัวแปร DOM
-const question = document.getElementById("question");
-const choicesDiv = document.getElementById("choices");
-const info = document.getElementById("info");
-const tableData = document.getElementById("tableData");
-
-// 🎵 SOUND
-let soundOn = true;
-function play(freq){
-  if(!soundOn) return;
-  let ctx=new(window.AudioContext||window.webkitAudioContext)();
-  let osc=ctx.createOscillator();
-  osc.frequency.value=freq;
-  osc.connect(ctx.destination);
-  osc.start();
-  setTimeout(()=>osc.stop(),150);
-}
-function toggleSound(){
-  soundOn=!soundOn;
-  localStorage.setItem("sound",soundOn);
-}
-if(localStorage.getItem("sound")==="false") soundOn=false;
-
-// 🌗 THEME
-function toggleTheme(){
-  document.body.classList.toggle("light");
-  localStorage.setItem("theme",
-  document.body.classList.contains("light")?"light":"dark");
-}
-if(localStorage.getItem("theme")==="light"){
-  document.body.classList.add("light");
-}
-
-// 📚 DATA
-const elements=[
-{s:"H",th:"ไฮโดรเจน",en:"Hydrogen"},
-{s:"He",th:"ฮีเลียม",en:"Helium"},
-{s:"Li",th:"ลิเทียม",en:"Lithium"},
-{s:"C",th:"คาร์บอน",en:"Carbon"},
-{s:"O",th:"ออกซิเจน",en:"Oxygen"},
-{s:"Na",th:"โซเดียม",en:"Sodium"},
-{s:"Fe",th:"เหล็ก",en:"Iron"},
-{s:"Cu",th:"ทองแดง",en:"Copper"},
-{s:"Zn",th:"สังกะสี",en:"Zinc"},
-{s:"Ag",th:"เงิน",en:"Silver"},
-{s:"Au",th:"ทอง",en:"Gold"},
+let elements = [
+  {s:"H", th:"ไฮโดรเจน"},
+  {s:"He", th:"ฮีเลียม"},
+  {s:"Li", th:"ลิเทียม"},
+  {s:"C", th:"คาร์บอน"},
+  {s:"O", th:"ออกซิเจน"},
+  {s:"Na", th:"โซเดียม"},
+  {s:"Fe", th:"เหล็ก"},
+  {s:"Cu", th:"ทองแดง"},
+  {s:"Zn", th:"สังกะสี"}
 ];
 
-// STATE
-let score=0, level=1, queue=[];
+let queue = [];
+let score = 0;
 
-// SCREEN
-function show(id){
-document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
+// 🌙 Theme
+function toggleTheme(){
+  document.body.classList.toggle("light");
 }
 
-// LEVEL
+// 🎮 Start
 function startLevel(){
-score=0;level=1;
-loadLevel();
-show("game");
-}
-function loadLevel(){
-let count=Math.min(level*10,elements.length);
-queue=shuffle(elements).slice(0,count);
-nextQ();
+  score = 0;
+  queue = [...elements];
+  showGame();
+  nextQ();
 }
 
-// MEMORY
 function startMemory(){
-score=0;
-queue=shuffle([...elements]);
-show("game");
-nextQ();
+  score = 0;
+  queue = [...elements];
+  showGame();
+  nextQ();
 }
 
-// TABLE
-function showTable(){
-show("table");
-let html="";
-elements.forEach(e=>{
-html+=`<div class="cell">${e.s}<br>${e.th}<br>${e.en}</div>`;
-});
-tableData.innerHTML=html;
+// 📺 UI
+function showGame(){
+  document.getElementById("menu").style.display="none";
+  document.getElementById("game").style.display="block";
 }
 
-// QUESTION
+function backMenu(){
+  document.getElementById("menu").style.display="block";
+  document.getElementById("game").style.display="none";
+}
+
+// ❓ Question
 function nextQ(){
-if(queue.length===0){
-play(800);
-level++;
-alert("🎉 Level Up!");
-loadLevel();
-return;
-}
-let q=queue[0];
-let askSymbol=Math.random()<0.5;
-let correct=askSymbol?q.th:q.s;
-question.innerText=askSymbol?q.s:q.th;
+  if(queue.length === 0){
+    alert("จบแล้ว!");
+    backMenu();
+    return;
+  }
 
-let choices=[correct];
-while(choices.length<4){
-let r=elements[Math.floor(Math.random()*elements.length)];
-let val=askSymbol?r.th:r.s;
-if(!choices.includes(val)) choices.push(val);
-}
-choices=shuffle(choices);
+  let current = queue[0];
+  let askSymbol = Math.random() < 0.5;
 
-let html="";
-choices.forEach(c=>{
-html+=`<button onclick="answer('${c}','${correct}')">${c}</button>`;
-});
-choicesDiv.innerHTML=html;
-info.innerText=`คะแนน: ${score} | Level: ${level}`;
-}
+  let correct = askSymbol ? current.th : current.s;
 
-// ANSWER
-function answer(c,correct){
-if(c===correct){
-score+=10;
-play(700);
-queue.shift();
-}else{
-score-=5;
-play(200);
-queue.push(queue.shift());
-}
-nextQ();
+  document.getElementById("question").innerText =
+    askSymbol ? current.s : current.th;
+
+  let choices = [correct];
+
+  while(choices.length < 4){
+    let rand = elements[Math.floor(Math.random()*elements.length)];
+    let val = askSymbol ? rand.th : rand.s;
+    if(!choices.includes(val)) choices.push(val);
+  }
+
+  choices.sort(()=>Math.random()-0.5);
+
+  let html = "";
+  choices.forEach(c=>{
+    html += `<button onclick="answer('${c}','${correct}')">${c}</button>`;
+  });
+
+  document.getElementById("choices").innerHTML = html;
+  document.getElementById("score").innerText = "คะแนน: " + score;
 }
 
-// BACK
-function backMenu(){show("menu");}
-
-// SHUFFLE
-function shuffle(a){return a.sort(()=>Math.random()-0.5);}
+// ✅ Answer
+function answer(c, correct){
+  if(c === correct){
+    score += 10;
+    queue.shift();
+  } else {
+    score -= 5;
+    queue.push(queue.shift());
+  }
+  nextQ();
+}
 </script>
 
 </body>
